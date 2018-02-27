@@ -65,7 +65,6 @@ class HDGRegression(BaseEstimator, RegressorMixin):
                                options={'gtol': 1e-3*self.d})
 
         self.B = self.result.x
-        print(self.B)
         self.alpha = np.linalg.inv(self.kernelMatrix(X, self.B)) @ y
         self.X = X
         return self
