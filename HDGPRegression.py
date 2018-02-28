@@ -25,8 +25,7 @@ class HDGRegression(BaseEstimator, RegressorMixin):
         return self.kOld
 
     def kernelDerivative(self, X, K, B, component):
-        deltaSquared = self.deltaSquareds[component]
-        return -B[component] * deltaSquared * K
+        return -B[component] * self.deltas[:, :, component] * K
 
     def likelihoodDerivative(self, X, y, B):
         K = self.kernelMatrix(X, B)
@@ -47,22 +46,21 @@ class HDGRegression(BaseEstimator, RegressorMixin):
                + self.rho * (B**2).sum()
         return res
 
-    def fit(self, X, y=None):
-        self.n, self.d = X.shape
-        self.deltaSquareds = [np.array([[(X[i, component] - X[j, component]) ** 2
-                                         for i in range(0, self.n)]
-                                        for j in range(0, self.n)])
-                              for component in range(0, self.d)]
-
+    def initializeDeltasForFasterKernelMatrix(self, X):
         self.deltas = np.array([[X[i, :] - X[j, :]
                                  for i in range(0, self.n)]
                                 for j in range(0, self.n)]) ** 2
+
+    def fit(self, X, y=None):
+        self.n, self.d = X.shape
+
+        self.initializeDeltasForFasterKernelMatrix(X)
         B = np.array([1] * X.shape[1])
 
         self.result = minimize(lambda B: self.likelihood(X, y, B),
                                B,
                                jac=lambda B: self.likelihoodDerivative(X, y, B),
-                               options={'gtol': 1e-3*self.d})
+                               options={'gtol': 1e-3})
 
         self.B = self.result.x
         self.alpha = np.linalg.inv(self.kernelMatrix(X, self.B)) @ y
