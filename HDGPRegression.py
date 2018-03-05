@@ -76,7 +76,7 @@ class HDGRegression(BaseEstimator, RegressorMixin):
 
 
     def predict(self, Xtest, y=None):
-        kstar = self.crossKernel(self.X, Xtest)
-        return kstar.T @ self.alpha
+        kstar = self.crossKernel(Xtest, self.X)
+        return kstar @ self.alpha
 
 
